@@ -1,6 +1,7 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { getPrivateKey, getPublicKey } from './keys.js';
 import { DactylError, ERROR_CODES } from '../lib/errors.js';
+import { redis } from '../redis/client.js';
 
 const ISSUER = 'dactyl';
 const AUDIENCE = 'dactyl-agents';
@@ -47,6 +48,14 @@ export async function verifyToken(token: string): Promise<JwtPayload> {
       });
     }
 
+    // Check revocation blocklist (populated by DELETE /auth/token)
+    const isRevoked = await redis.exists(`dactyl:revoked:${token}`);
+    if (isRevoked) {
+      throw new DactylError(ERROR_CODES.INVALID_TOKEN, {
+        reason: 'revoked',
+      });
+    }
+
     return {
       agentId: payload['agentId'],
       iat: payload.iat as number,
@@ -54,8 +63,9 @@ export async function verifyToken(token: string): Promise<JwtPayload> {
     };
   } catch (err) {
     if (err instanceof DactylError) throw err;
+    // Return generic reason — never leak jose internals to the caller
     throw new DactylError(ERROR_CODES.INVALID_TOKEN, {
-      reason: (err as Error).message,
+      reason: 'invalid',
     });
   }
 }

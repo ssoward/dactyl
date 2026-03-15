@@ -2,6 +2,7 @@ import type { FastifyRequest, FastifyReply } from 'fastify';
 import { verifyToken } from './jwt.js';
 import { DactylError, ERROR_CODES } from '../lib/errors.js';
 import { query } from '../db/client.js';
+import { redis } from '../redis/client.js';
 
 // Augment Fastify's request interface so TypeScript knows about agentId
 declare module 'fastify' {
@@ -45,13 +46,18 @@ export async function authMiddleware(
   const payload = await verifyToken(token);
   request.agentId = payload.agentId;
 
-  // Fire-and-forget last_active_at update — do not await
-  query(
-    'UPDATE agents SET last_active_at = NOW() WHERE id = $1',
-    [payload.agentId],
-  ).catch(() => {
-    // Swallow silently; this is a best-effort update
-  });
+  // Debounced last_active_at: write to DB at most once every 5 minutes per agent.
+  // Uses Redis as a gate to avoid a DB write on every single authenticated request.
+  const debounceKey = `dactyl:active:${payload.agentId}`;
+  redis.set(debounceKey, '1', 'EX', 300, 'NX').then((result) => {
+    if (result === 'OK') {
+      // Key was newly set — run the DB update
+      query(
+        'UPDATE agents SET last_active_at = NOW() WHERE id = $1',
+        [payload.agentId],
+      ).catch(() => {});
+    }
+  }).catch(() => {});
 }
 
 /**

@@ -61,6 +61,9 @@ export async function debitCredits(
 
 /**
  * Credit an agent's account (topup or refund).
+ *
+ * stripeEventId: if provided, used as an idempotency key — the same Stripe event
+ * will not credit the account twice even if Stripe delivers the webhook multiple times.
  */
 export async function creditBalance(
   agentId: string,
@@ -68,11 +71,28 @@ export async function creditBalance(
   type: 'topup' | 'refund',
   stripePaymentId: string | undefined,
   pool: pg.Pool,
+  stripeEventId?: string,
 ): Promise<{ newBalance: number }> {
   const txId = newTxId();
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+
+    // Idempotency check: if this Stripe event was already processed, return current balance.
+    if (stripeEventId) {
+      const dup = await client.query<{ id: string }>(
+        'SELECT id FROM credit_transactions WHERE stripe_event_id = $1',
+        [stripeEventId],
+      );
+      if (dup.rows.length > 0) {
+        await client.query('ROLLBACK');
+        const balRow = await pool.query<{ credits: number }>(
+          'SELECT credits FROM agents WHERE id = $1',
+          [agentId],
+        );
+        return { newBalance: balRow.rows[0]?.credits ?? 0 };
+      }
+    }
 
     const result = await client.query<{ credits: number }>(
       'UPDATE agents SET credits = credits + $1 WHERE id = $2 RETURNING credits',
@@ -85,9 +105,9 @@ export async function creditBalance(
     }
 
     await client.query(
-      `INSERT INTO credit_transactions (id, agent_id, type, amount, stripe_payment_id)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [txId, agentId, type, amount, stripePaymentId ?? null],
+      `INSERT INTO credit_transactions (id, agent_id, type, amount, stripe_payment_id, stripe_event_id)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [txId, agentId, type, amount, stripePaymentId ?? null, stripeEventId ?? null],
     );
 
     await client.query('COMMIT');

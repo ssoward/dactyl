@@ -27,17 +27,27 @@ import type { Task, Agent } from '../types.js';
 // ─── TypeBox Schemas ──────────────────────────────────────────────────────────
 
 const PostTaskBody = Type.Object({
-  lane_slug: Type.String({ minLength: 1 }),
+  lane_slug: Type.String({ minLength: 1, maxLength: 100 }),
   title: Type.String({ minLength: 1, maxLength: 200 }),
   description: Type.Optional(Type.String({ maxLength: 2000 })),
-  input_payload: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
-  acceptance_criteria: Type.Optional(Type.Array(Type.String())),
-  min_karma_required: Type.Optional(Type.Integer({ minimum: 0 })),
-  expires_in_seconds: Type.Optional(Type.Integer({ minimum: 60 })),
+  // Limit payload size: max 50 keys, each string value max 10 KB.
+  // Prevents multi-MB blobs from being stored and returned in list views.
+  input_payload: Type.Optional(
+    Type.Record(Type.String({ maxLength: 100 }), Type.Unknown(), { maxProperties: 50 }),
+  ),
+  acceptance_criteria: Type.Optional(
+    Type.Array(Type.String({ maxLength: 500 }), { maxItems: 20 }),
+  ),
+  min_karma_required: Type.Optional(Type.Integer({ minimum: 0, maximum: 10000 })),
+  expires_in_seconds: Type.Optional(Type.Integer({ minimum: 60, maximum: 2592000 })), // max 30 days
 });
 
 const SubmitResultBody = Type.Object({
-  result_payload: Type.Record(Type.String(), Type.Unknown()),
+  result_payload: Type.Record(
+    Type.String({ maxLength: 100 }),
+    Type.Unknown(),
+    { maxProperties: 50 },
+  ),
 });
 
 const VoteBody = Type.Object({

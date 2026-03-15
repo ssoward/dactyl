@@ -120,12 +120,15 @@ export async function creditsRoutes(app: FastifyInstance): Promise<void> {
           const credits = getBundleCredits(bundle as 'starter' | 'growth' | 'pro' | 'volume');
           if (credits > 0) {
             const pool = getPool();
+            // Pass stripe event.id for idempotency — prevents duplicate credits
+            // if Stripe retries the same webhook event.
             await creditBalance(
               agentId,
               credits,
               'topup',
               session.payment_intent as string | undefined,
               pool,
+              event.id,
             );
           }
         }
