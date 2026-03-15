@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "scripts",
+    "outDir": "dist/scripts",
+    "declaration": false,
+    "declarationMap": false
+  },
+  "include": ["scripts/db-migrate.ts", "scripts/db-seed.ts", "scripts/gen-rsa-keys.ts"]
+}

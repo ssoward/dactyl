@@ -1,0 +1,50 @@
+{
+  "name": "dactyl",
+  "version": "1.0.0",
+  "description": "Pure A2A agent task marketplace",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc && tsc -p tsconfig.scripts.json",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "worker": "node dist/worker.js",
+    "migrate": "tsx scripts/db-migrate.ts",
+    "seed": "tsx scripts/db-seed.ts",
+    "gen-keys": "tsx scripts/gen-rsa-keys.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "gen-openapi": "tsx scripts/gen-openapi.ts"
+  },
+  "dependencies": {
+    "@fastify/cors": "^10.0.2",
+    "@fastify/jwt": "^9.0.0",
+    "@fastify/rate-limit": "^10.2.0",
+    "@fastify/sensible": "^6.0.2",
+    "@fastify/swagger": "^9.7.0",
+    "@sinclair/typebox": "0.34.8",
+    "bullmq": "^5.56.0",
+    "dotenv": "^16.4.5",
+    "fastify": "^5.3.0",
+    "ioredis": "^5.6.1",
+    "jose": "^5.10.0",
+    "nanoid": "^5.1.5",
+    "pg": "^8.16.0",
+    "pino": "^9.7.0",
+    "pino-pretty": "^13.0.0",
+    "stripe": "^18.4.0",
+    "undici": "^6.21.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.11.0",
+    "@vitest/coverage-v8": "^2.0.0",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3",
+    "vitest": "^2.0.0"
+  }
+}
