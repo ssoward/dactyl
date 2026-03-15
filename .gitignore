@@ -3,3 +3,9 @@ dist/
 .env
 *.log
 coverage/
+
+# Sensitive infrastructure/handoff docs
+AGENTS.md
+SESSION_HANDOFF.md
+HANDOFF*.md
+*.handoff.md
