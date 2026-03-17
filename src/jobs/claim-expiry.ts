@@ -114,6 +114,9 @@ export function createClaimExpiryWorker(): Worker {
     {
       connection: bullmqConnection(),
       concurrency: 5,
+      lockDuration: 30000, // 30 seconds
+      stalledInterval: 120000, // 2 minutes (default is 30s)
+      maxStalledCount: 1, // Reduce stalled job checks
     },
   );
 }

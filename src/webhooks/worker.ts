@@ -75,7 +75,10 @@ export function createWebhookWorker(): Worker {
     },
     {
       connection: bullmqConnection(),
-      concurrency: 10,
+      concurrency: 5, // Reduced from 10
+      lockDuration: 30000,
+      stalledInterval: 120000,
+      maxStalledCount: 1,
       settings: {
         backoffStrategy(attemptsMade: number): number {
           // Use custom schedule; clamp to last value for excess attempts

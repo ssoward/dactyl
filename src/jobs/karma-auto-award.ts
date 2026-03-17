@@ -105,6 +105,9 @@ export function createKarmaAutoAwardWorker(): Worker {
     {
       connection: bullmqConnection(),
       concurrency: 5,
+      lockDuration: 30000,
+      stalledInterval: 120000,
+      maxStalledCount: 1,
     },
   );
 }
