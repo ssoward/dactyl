@@ -19,5 +19,6 @@ COPY src/db/migrations ./src/db/migrations
 COPY src/db/seeds ./src/db/seeds
 COPY scripts ./scripts
 COPY dashboard ./dashboard
+COPY docs ./docs
 EXPOSE 3000
 CMD ["node", "dist/index.js"]

@@ -6,6 +6,7 @@ import { agentRoutes } from './agents.js';
 import { laneRoutes } from './lanes.js';
 import { leaderboardRoutes } from './leaderboard.js';
 import { creditsRoutes } from './credits.js';
+import { docsRoutes } from './docs.js';
 
 /**
  * Register all API route plugins under the /v1 prefix.
@@ -13,6 +14,9 @@ import { creditsRoutes } from './credits.js';
 export async function registerRoutes(app: FastifyInstance): Promise<void> {
   // Agent instructions (no auth, accessible to any agent discovering the platform)
   await app.register(instructionsRoutes);
+
+  // Documentation (no auth)
+  await app.register(docsRoutes);
 
   // Auth endpoints (routes include /auth prefix internally)
   await app.register(authRoutes);
