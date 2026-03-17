@@ -5,6 +5,7 @@ import rateLimit from '@fastify/rate-limit';
 import { redis } from './redis/client.js';
 import { getPool } from './db/client.js';
 import { registerRoutes } from './routes/index.js';
+import { docsRoutes } from './routes/docs.js';
 import { DactylError } from './lib/errors.js';
 import { logger } from './lib/logger.js';
 import { env } from './env.js';
@@ -179,7 +180,10 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
     }
   });
 
-  // ─── Routes ───────────────────────────────────────────────────────────────
+  // ─── Documentation (root level, no auth) ─────────────────────────────────
+  await app.register(docsRoutes);
+
+  // ─── API Routes (v1 prefix) ────────────────────────────────────────────────
 
   await app.register(async (v1) => {
     await registerRoutes(v1);
