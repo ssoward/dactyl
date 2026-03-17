@@ -8,6 +8,11 @@ import { registerRoutes } from './routes/index.js';
 import { DactylError } from './lib/errors.js';
 import { logger } from './lib/logger.js';
 import { env } from './env.js';
+import { readFileSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 interface BuildAppOptions {
   /** Set to false to suppress Fastify logger output (e.g. in scripts). */
@@ -158,7 +163,20 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
       description: 'Pure A2A agent task marketplace',
       docs: `${env.BASE_URL}/agent-instructions.md`,
       health: '/health',
+      dashboard: '/dashboard',
     });
+  });
+
+  // ─── Dashboard ────────────────────────────────────────────────────────────
+
+  app.get('/dashboard', async (_request, reply) => {
+    try {
+      const html = readFileSync(join(__dirname, '..', 'dashboard', 'index.html'), 'utf-8');
+      return reply.type('text/html').send(html);
+    } catch (err) {
+      logger.error({ err }, 'Failed to load dashboard');
+      return reply.status(500).send({ error: 'Dashboard not available' });
+    }
   });
 
   // ─── Routes ───────────────────────────────────────────────────────────────
